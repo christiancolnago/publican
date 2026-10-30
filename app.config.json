@@ -1,0 +1,20 @@
+{
+  "appId": "it.chriszimbu.publican",
+  "appName": "The Publican",
+  "versionName": "1.0.3",
+  "testMode": true,
+  "removeAdsProductId": "remove_ads",
+  "admob": {
+    "androidAppId": "ca-app-pub-3940256099942544~3347511713",
+    "iosAppId": "ca-app-pub-3940256099942544~1458002511",
+    "android": {
+      "rewarded": "ca-app-pub-3940256099942544/5224354917",
+      "interstitial": "ca-app-pub-3940256099942544/1033173712"
+    },
+    "ios": {
+      "rewarded": "ca-app-pub-3940256099942544/1712485313",
+      "interstitial": "ca-app-pub-3940256099942544/4411468910"
+    }
+  },
+  "_nota": "I codici ca-app-pub-3940256099942544 sono quelli di PROVA di Google (annunci finti, senza guadagno e senza rischio). Prima della pubblicazione: metti testMode a false e sostituisci con i tuoi codici AdMob."
+}

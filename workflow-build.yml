@@ -1,0 +1,150 @@
+# Da incollare in GitHub come  .github/workflows/build.yml  (vedi la guida, passo 4)
+name: Compila app
+
+on:
+  workflow_dispatch:
+    inputs:
+      cosa:
+        description: "Cosa vuoi fare?"
+        type: choice
+        default: android-prova
+        options:
+          - android-prova        # APK da installare su un telefono Android per provare
+          - android-store        # pacchetto .aab firmato da caricare su Google Play
+          - crea-chiave-android  # si fa UNA volta sola
+          - iphone               # build iPhone verso TestFlight (seconda fase)
+
+jobs:
+  android:
+    if: ${{ inputs.cosa == 'android-prova' || inputs.cosa == 'android-store' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - name: Installa pacchetti
+        run: npm install
+      - name: Prepara il gioco
+        run: node prepare.mjs
+      - name: Crea il progetto Android
+        run: |
+          npx cap add android
+          VERSION_CODE=${{ github.run_number }} node patch-android.mjs
+          npx capacitor-assets generate --android
+          npx cap sync android
+      - name: Compila
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug bundleRelease --no-daemon --stacktrace
+      - name: Firma il pacchetto per Google Play
+        if: ${{ inputs.cosa == 'android-store' }}
+        env:
+          KS_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
+          KS_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KS_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: |
+          if [ -z "$KS_B64" ] || [ -z "$KS_PASS" ] || [ -z "$KS_ALIAS" ]; then echo "Mancano i segreti della chiave Android (guida, passo 6)"; exit 1; fi
+          echo "$KS_B64" | base64 -d > upload.jks
+          AAB=android/app/build/outputs/bundle/release/app-release.aab
+          jarsigner -keystore upload.jks -storepass "$KS_PASS" -keypass "$KS_PASS" -sigalg SHA256withRSA -digestalg SHA-256 "$AAB" "$KS_ALIAS"
+          jarsigner -verify "$AAB" | tail -n 2
+          rm -f upload.jks
+      - name: Controllo finale
+        run: |
+          ls -la android/app/build/outputs/apk/debug android/app/build/outputs/bundle/release
+          if grep -q '"testMode": true' app.config.json; then echo "NOTA: annunci di PROVA attivi (app.config.json)"; fi
+      - uses: actions/upload-artifact@v4
+        if: ${{ inputs.cosa == 'android-prova' }}
+        with:
+          name: the-publican-apk-prova
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 14
+      - uses: actions/upload-artifact@v4
+        if: ${{ inputs.cosa == 'android-store' }}
+        with:
+          name: the-publican-aab-per-google-play
+          path: android/app/build/outputs/bundle/release/app-release.aab
+          retention-days: 30
+
+  chiave:
+    if: ${{ inputs.cosa == 'crea-chiave-android' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Crea la chiave di firma Android
+        run: |
+          PASS=$(openssl rand -hex 16)
+          keytool -genkeypair -v -storetype PKCS12 -keystore upload.jks -alias upload -keyalg RSA -keysize 2048 -validity 10000 \
+            -storepass "$PASS" -keypass "$PASS" -dname "CN=The Publican, O=Zimurgo, C=IT" > /dev/null 2>&1
+          mkdir out
+          base64 -w0 upload.jks > out/1-ANDROID_KEYSTORE_B64.txt
+          echo -n "$PASS" > out/2-ANDROID_KEYSTORE_PASSWORD.txt
+          echo -n "upload" > out/3-ANDROID_KEY_ALIAS.txt
+          cp upload.jks out/upload.jks
+      - uses: actions/upload-artifact@v4
+        with:
+          name: chiave-android-DA-CONSERVARE
+          path: out
+          retention-days: 3
+
+  iphone:
+    if: ${{ inputs.cosa == 'iphone' }}
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Xcode più recente
+        run: |
+          ls /Applications | grep -i xcode || true
+          sudo xcode-select -s "$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -n 1)" || true
+          xcodebuild -version
+      - name: Installa pacchetti e prepara
+        run: |
+          npm install
+          node prepare.mjs
+          npx cap add ios
+          node patch-ios.mjs
+          npx capacitor-assets generate --ios
+          npx cap sync ios
+      - name: Chiave App Store Connect
+        env:
+          KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+          KEY_ID: ${{ secrets.ASC_KEY_ID }}
+        run: |
+          if [ -z "$KEY_P8" ] || [ -z "$KEY_ID" ]; then echo "Mancano i segreti Apple (guida iPhone)"; exit 1; fi
+          mkdir -p "$HOME/private_keys"
+          printf '%s' "$KEY_P8" > "$HOME/private_keys/AuthKey_${KEY_ID}.p8"
+      - name: Archivia e carica su TestFlight
+        env:
+          KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ISSUER: ${{ secrets.ASC_ISSUER_ID }}
+          TEAM: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          KEYPATH="$HOME/private_keys/AuthKey_${KEY_ID}.p8"
+          cd ios/App
+          if [ -d App.xcworkspace ]; then TARGET="-workspace App.xcworkspace"; else TARGET="-project App.xcodeproj"; fi
+          VER=$(node -p "require('../../app.config.json').versionName")
+          xcodebuild archive $TARGET -scheme App -configuration Release -destination 'generic/platform=iOS' \
+            -archivePath "$PWD/build/App.xcarchive" -allowProvisioningUpdates \
+            -authenticationKeyPath "$KEYPATH" -authenticationKeyID "$KEY_ID" -authenticationKeyIssuerID "$ISSUER" \
+            DEVELOPMENT_TEAM="$TEAM" CODE_SIGN_STYLE=Automatic CURRENT_PROJECT_VERSION=${{ github.run_number }} MARKETING_VERSION="$VER"
+          cat > ExportOptions.plist <<PLIST
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0"><dict>
+            <key>method</key><string>app-store-connect</string>
+            <key>teamID</key><string>$TEAM</string>
+            <key>signingStyle</key><string>automatic</string>
+            <key>destination</key><string>upload</string>
+          </dict></plist>
+          PLIST
+          xcodebuild -exportArchive -archivePath "$PWD/build/App.xcarchive" -exportOptionsPlist ExportOptions.plist \
+            -exportPath "$PWD/build/export" -allowProvisioningUpdates \
+            -authenticationKeyPath "$KEYPATH" -authenticationKeyID "$KEY_ID" -authenticationKeyIssuerID "$ISSUER"

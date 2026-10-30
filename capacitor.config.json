@@ -1,0 +1,21 @@
+{
+  "appId": "it.chriszimbu.publican",
+  "appName": "The Publican",
+  "webDir": "www",
+  "backgroundColor": "#0f1613",
+  "server": {
+    "androidScheme": "https"
+  },
+  "ios": {
+    "contentInset": "always",
+    "backgroundColor": "#0f1613"
+  },
+  "android": {
+    "backgroundColor": "#0f1613"
+  },
+  "plugins": {
+    "SystemBars": {
+      "insetsHandling": "disable"
+    }
+  }
+}
