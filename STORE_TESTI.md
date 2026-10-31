@@ -29,7 +29,7 @@ COSA TROVI
 • In italiano, inglese, francese e tedesco; si gioca in verticale
 
 PUBBLICITÀ E ACQUISTI
-Il gioco è gratuito e contiene pubblicità. Puoi guardare un video per riprovare un livello o raddoppiare le monete. Con un acquisto singolo puoi rimuovere la pubblicità.
+Il gioco è gratuito e contiene pubblicità. Puoi guardare un video facoltativo per riprovare un livello o raddoppiare le monete. Con un acquisto singolo togli la pubblicità a schermo intero tra un livello e l'altro (i video facoltativi restano).
 
 Gioco per adulti (18+). Non incoraggia il consumo di alcolici: se bevi, bevi con moderazione e non metterti alla guida.
 
@@ -59,7 +59,7 @@ WHAT YOU GET
 • In Italian, English, French and German; play in portrait
 
 ADS AND PURCHASES
-The game is free and contains ads. You can watch a video to retry a level or double your coins. A one-time purchase removes ads.
+The game is free and contains ads. You can watch an optional video to retry a level or double your coins. A one-time purchase removes the full-screen ads between levels (the optional videos stay).
 
 For adults (18+). The game does not encourage drinking alcohol: if you drink, do it in moderation and never before driving.
 
@@ -89,7 +89,7 @@ AU PROGRAMME
 • En italien, anglais, français et allemand ; se joue en mode portrait
 
 PUBLICITÉS ET ACHATS
-Le jeu est gratuit et contient des publicités. Vous pouvez regarder une vidéo pour rejouer un niveau ou doubler vos pièces. Un achat unique supprime les publicités.
+Le jeu est gratuit et contient des publicités. Vous pouvez regarder une vidéo facultative pour rejouer un niveau ou doubler vos pièces. Un achat unique supprime les pubs plein écran entre les niveaux (les vidéos facultatives restent).
 
 Jeu pour adultes (18+). Il n'encourage pas la consommation d'alcool : à consommer avec modération, jamais avant de conduire.
 
@@ -119,7 +119,7 @@ DAS ERWARTET DICH
 • Auf Italienisch, Englisch, Französisch und Deutsch; im Hochformat
 
 WERBUNG UND KÄUFE
-Das Spiel ist kostenlos und enthält Werbung. Mit einem Video kannst du ein Level wiederholen oder deine Münzen verdoppeln. Ein einmaliger Kauf entfernt die Werbung.
+Das Spiel ist kostenlos und enthält Werbung. Mit einem optionalen Video kannst du ein Level wiederholen oder deine Münzen verdoppeln. Ein einmaliger Kauf entfernt die Vollbildwerbung zwischen den Levels (die optionalen Videos bleiben).
 
 Für Erwachsene (18+). Das Spiel fördert den Alkoholkonsum nicht: Wenn du trinkst, dann maßvoll und nie vor dem Fahren.
 
@@ -129,10 +129,10 @@ Für Erwachsene (18+). Das Spiel fördert den Alkoholkonsum nicht: Wenn du trink
 **Categoria:** Giochi → Simulazione (o Arcade / Casual). Su App Store: Giochi, secondaria Simulazione.
 **Età / classificazione:** il tema è l'alcol (birra). Rispondi onestamente: "riferimenti ad alcol" = SÌ, presenti spesso. Aspettati una classificazione alta (App Store 18+; Google/IARC dipende dalle risposte). Non è un problema: è coerente con la nicchia.
 **Gioco d'azzardo, violenza, contenuti sessuali, linguaggio volgare:** NO.
-**Pubblicità:** SÌ (AdMob). **Acquisti in-app:** SÌ (Rimuovi pubblicità, 1 prodotto).
+**Pubblicità:** SÌ (AdMob). **Acquisti in-app:** SÌ (Niente pubblicità a fine livello, 1 prodotto).
 **Account utente / eliminazione account:** l'app NON ha account → nessun obbligo di cancellazione account.
 **Data safety (Google Play) e Privacy nutrition labels (Apple):** i dati raccolti sono solo quelli della pubblicità di AdMob. Segui la pagina ufficiale di Google "Data disclosure for AdMob" e dichiara le stesse voci (identificativo pubblicitario / ID dispositivo, posizione approssimativa ricavata dall'IP, interazioni con l'app, diagnostica) come "raccolti e condivisi con Google per la pubblicità". Dati cifrati in transito: SÌ. Nessun dato personale proprio.
-**URL informativa privacy:** https://christiancolnago.github.io/appgame/privacy.html (dopo aver caricato privacy.html nel repository appgame)
+**URL informativa privacy:** https://christiancolnago.github.io/beergame/privacy.html (dopo aver caricato privacy.html nel repository beergame)
 **Pubblico di destinazione:** adulti (18+), NON bambini → niente programma "Families".
 **App Store - tracciamento (ATT):** SÌ, l'app lo richiede (pubblicità).
 **App Store - crittografia (export compliance):** già impostato su "NO" nell'app.
