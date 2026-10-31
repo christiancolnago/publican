@@ -6,6 +6,7 @@
   "engines": { "node": ">=22" },
   "dependencies": {
     "@capacitor/core": "^8.5.0",
+    "@capacitor/app": "^8.0.0",
     "@capacitor/android": "^8.5.0",
     "@capacitor/ios": "^8.5.0",
     "@capacitor-community/admob": "^8.2.0",

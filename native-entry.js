@@ -2,6 +2,7 @@
 import { Capacitor } from '@capacitor/core';
 import { AdMob, RewardAdPluginEvents, InterstitialAdPluginEvents } from '@capacitor-community/admob';
 import { store, ProductType, Platform, ErrorCode } from 'capacitor-plugin-cdv-purchase';
+import { App } from '@capacitor/app';
 import './native-provider.js';
 
 if (Capacitor.isNativePlatform()) {
@@ -11,6 +12,8 @@ if (Capacitor.isNativePlatform()) {
     const st = document.documentElement.style;
     ['top', 'bottom', 'left', 'right'].forEach((k) => st.setProperty('--safe-area-inset-' + k, '0px'));
   }
+  // avvisa il gioco quando l'app va in secondo piano (pausa, musica ferma) o torna in primo piano
+  try { App.addListener('appStateChange', (s) => { document.dispatchEvent(new CustomEvent('bb-appstate', { detail: { active: !!s.isActive } })); }); } catch (err) {}
   const cfg = g.BB_NATIVE_CONFIG || {};
   g.BB.nativeProvider = g.BB.createNativeProvider({
     AdMob, store, ProductType, Platform, ErrorCode,

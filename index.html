@@ -2201,7 +2201,7 @@ input[type=range] { width: 100%; accent-color: var(--amber); height: 32px; }
     }
     _spawn() {
       const base = this.pool[this.spawned % this.pool.length];
-      const c = Object.assign({}, base, { id: this.level + ':' + this.spawned, wait: 0, wrongPicks: 0 });
+      const c = Object.assign({}, base, { id: this.level + ':' + this.spawned + ':' + (BB._cuid = (BB._cuid || 0) + 1), wait: 0, wrongPicks: 0 });
       c.waitLimit = Math.round(this.rules.patience * BB.CUSTOMER_TYPES[base.type].patience + (this.spawned === 0 ? 10 : 0));
       this.spawned++;
       this.queue.push(c);
@@ -2721,7 +2721,7 @@ input[type=range] { width: 100%; accent-color: var(--amber); height: 32px; }
       if (!this.ctx || this.musicTimer) return;
       const bass = [110, 110, 146.8, 130.8, 110, 110, 164.8, 146.8], lead = [440, 0, 523, 0, 659, 523, 0, 392];
       this.musicTimer = setInterval(() => {
-        if (!this.ctx || !this.settings.music) return;
+        if (!this.ctx || !this.settings.music || this.ctx.state !== 'running') return;
         const t = this.ctx.currentTime, i = this.step++ % 8;
         const note = (f, dur, vol, type) => {
           if (!f) return; const o = this.ctx.createOscillator(), gn = this.ctx.createGain();
@@ -2732,6 +2732,7 @@ input[type=range] { width: 100%; accent-color: var(--amber); height: 32px; }
       }, 420);
     }
     stopMusic() { if (this.musicTimer) { clearInterval(this.musicTimer); this.musicTimer = null; } }
+    suspend() { try { if (this.ctx && this.ctx.state === 'running') { const p = this.ctx.suspend(); if (p && p.catch) p.catch(() => {}); } } catch (e) {} }
   }
 
   BB.AudioManager = AudioManager;
@@ -3587,7 +3588,8 @@ input[type=range] { width: 100%; accent-color: var(--amber); height: 32px; }
     const cleanNick = (v) => String(v || '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^A-Za-z0-9 ._-]/g, '').replace(/\s+/g, ' ').trim().slice(0, 14);
     const nickOk = (v) => /^[A-Za-z0-9 ._-]{3,14}$/.test(v);
     // ---------- condivisione e sfide ----------
-    const baseUrl = () => (/^https?:$/.test(location.protocol) ? location.origin + location.pathname : 'https://christiancolnago.github.io/appgame/');
+    const WEB_URL = 'https://christiancolnago.github.io/beergame/';
+    const baseUrl = () => ((!BB.nativeProvider && /^https?:$/.test(location.protocol)) ? location.origin + location.pathname : WEB_URL);
     function makeCard(info) {
       const W = 1080, H = 1350, cv = document.createElement('canvas'); cv.width = W; cv.height = H; const c = cv.getContext('2d');
       const g = c.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#2a1a0c'); g.addColorStop(1, '#0b0704'); c.fillStyle = g; c.fillRect(0, 0, W, H);
@@ -3835,7 +3837,9 @@ input[type=range] { width: 100%; accent-color: var(--amber); height: 32px; }
     try { const mqL = g.matchMedia('(orientation: landscape) and (pointer: coarse)'); const onRot = () => { if (mqL.matches) pause(); }; if (mqL.addEventListener) mqL.addEventListener('change', onRot); else mqL.addListener(onRot); } catch (e) {}
     $('btnResume').onclick = () => { click(); game.resume(); hideAll(); };
     $('btnPauseHome').onclick = () => { click(); game.goHome(); showHome(); };
-    document.addEventListener('visibilitychange', () => { if (document.hidden) { pause(); save.save(); } });
+    document.addEventListener('visibilitychange', () => { if (document.hidden) { pause(); save.save(); audio.suspend(); } });
+    // app nativa: il sistema avvisa quando l'app passa in secondo piano o torna davanti
+    document.addEventListener('bb-appstate', (e) => { if (e.detail && e.detail.active === false) { pause(); save.save(); audio.suspend(); } else { wakeAll(); } });
     g.addEventListener('pagehide', () => save.save());
 
     // ---------- comandi di spillatura ----------
