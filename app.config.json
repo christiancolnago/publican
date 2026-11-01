@@ -1,7 +1,7 @@
 {
   "appId": "it.chriszimbu.publican",
   "appName": "The Publican",
-  "versionName": "1.0.6",
+  "versionName": "1.0.7",
   "testMode": true,
   "removeAdsProductId": "remove_ads",
   "admob": {
