@@ -1090,7 +1090,7 @@ input[type=range] { width: 100%; accent-color: var(--amber); height: 32px; }
     { id: 'brewery', name: 'Birreria', fromLevel: 13, wall: ['#38302a', '#19130f'], accent: '#e46f3a', counter: ['#8a5a2b', '#4a2f14'] },
   ];
 
-  BB.CONFIG = { flowRate: 85, lives: 3, passScore: 55, saveKey: 'bb_save_v2', perLevel: 4, lostPerHeart: 1, maxHearts: 4, heartCost: 1000 };
+  BB.CONFIG = { flowRate: 85, lives: 3, passScore: 55, saveKey: 'bb_save_v2', perLevel: 4, perLevelFor: (lv, bonus) => (bonus || lv < 4) ? 4 : Math.min(8, 4 + Math.floor((lv - 2) / 2)), lostPerHeart: 1, maxHearts: 4, heartCost: 1000 };
 })(typeof globalThis !== 'undefined' ? globalThis : this);
 
 /* ---- glassgeo.js ---- */
@@ -2141,6 +2141,7 @@ input[type=range] { width: 100%; accent-color: var(--amber); height: 32px; }
 
     // ---------- avvio / ripresa ----------
     hasSave() { return this.save.hasGame(); }
+    get levelTarget() { return BB.CONFIG.perLevelFor(this.session.level, !!this.session.bonus); } // clienti da servire per passare il livello
 
     startNew() {
       this.save.newGame();
@@ -2151,7 +2152,7 @@ input[type=range] { width: 100%; accent-color: var(--amber); height: 32px; }
       const s = this.save.data.session;
       if (!s) { this._createSession(this.progress.level); }
       else {
-        const idx = Math.min(Math.max(0, s.idx), BB.CONFIG.perLevel - 1);
+        const idx = Math.min(Math.max(0, s.idx), BB.CONFIG.perLevelFor(s.level, !!s.bonus) - 1);
         this.session = { level: s.level, seed: s.seed, idx, lives: s.lives, results: s.results.slice(0, idx), bonus: false };
         this.pool = BB.LevelManager.generate(s.level, s.seed, 0, false);
       }
@@ -2423,7 +2424,7 @@ input[type=range] { width: 100%; accent-color: var(--amber); height: 32px; }
     next() { // dopo il risultato: torna alla coda oppure completa il livello
       if (this.state !== 'result') return false;
       this.order = null; this.model = null; this.chosenGlassId = null; this.wrongPicks = 0;
-      if (this.session.idx >= BB.CONFIG.perLevel) this._completeLevel(); else { this.setState('select'); this.emit('queue'); }
+      if (this.session.idx >= this.levelTarget) this._completeLevel(); else { this.setState('select'); this.emit('queue'); }
       return true;
     }
     _completeLevel() {
@@ -3937,7 +3938,7 @@ input[type=range] { width: 100%; accent-color: var(--amber); height: 32px; }
       if (game.selectCustomer(el.dataset.id)) audio.sfx('click');
     });
     function updateBar() {
-      const runPts = LB().run.score; $('barInfo').textContent = (game.session.bonus ? T('bonus.tag', { s: game.served, n: BB.CONFIG.perLevel }) : T('bar.info', { l: game.session.level, s: game.served, n: BB.CONFIG.perLevel })) + (runPts > 0 ? '\n' + fmtN(runPts) + ' pt' + (game.combo >= 2 ? ' · 🔥×' + game.combo : '') : (game.combo >= 2 ? ' · 🔥×' + game.combo : ''));
+      const runPts = LB().run.score; $('barInfo').textContent = (game.session.bonus ? T('bonus.tag', { s: game.served, n: game.levelTarget }) : T('bar.info', { l: game.session.level, s: game.served, n: game.levelTarget })) + (runPts > 0 ? '\n' + fmtN(runPts) + ' pt' + (game.combo >= 2 ? ' · 🔥×' + game.combo : '') : (game.combo >= 2 ? ' · 🔥×' + game.combo : ''));
       const half = game.lost % BB.CONFIG.lostPerHeart;
       $('barLives').textContent = game.maxLives > 6 ? '♥ ' + Math.max(0, game.lives) + '/' + game.maxLives + (half ? ' ½' : '') : '♥'.repeat(Math.max(0, game.lives)) + '♡'.repeat(Math.max(0, game.maxLives - game.lives)) + (half ? ' ½' : '');
       $('barLives').setAttribute('aria-label', T('lives.aria2', { n: game.lives }) + (half ? T('lives.aria3', { k: BB.CONFIG.lostPerHeart }) : ''));
@@ -4051,7 +4052,7 @@ input[type=range] { width: 100%; accent-color: var(--amber); height: 32px; }
 
     function renderResult(r) {
       if (game.state !== 'result' && game.state !== 'levelfail') return;
-      const last = game.state === 'result' && r.ok && game.served >= BB.CONFIG.perLevel;
+      const last = game.state === 'result' && r.ok && game.served >= game.levelTarget;
       const bars = [[T('res.amount'), r.parts.amount, '#6fb7ff'], [T('res.foam'), r.parts.foam, '#f4ecd8'], [T('res.tech'), r.parts.technique, '#f0a830'], [T('res.waste'), r.parts.waste, '#5fcf80']];
       const o = game.order, tip = T('tip.' + (r.reason || 'good'));
       let html = '<div class="verdict ' + (r.ok ? 'ok' : 'bad') + '">' + (r.ok ? (r.mood === 'happy' ? T('res.happy') : T('res.meh')) : T('res.bad')) + '</div>' +
@@ -4128,11 +4129,13 @@ input[type=range] { width: 100%; accent-color: var(--amber); height: 32px; }
       $('vTips').onclick = () => { click(); openTips(v.level + 1); };
       $('vNext').onclick = async () => {
         click();
-        if (zimDue(v.level) && !v.bonus) { $('vNext').disabled = true; await showZim(); }
-        hideAll(); game.continueAfterVictory(); monet.maybeInterstitial('level_complete');
+        $('vNext').disabled = true;
+        if (zimDue(v.level) && !v.bonus) { await showZim(); }
+        try { await monet.maybeInterstitial('level_complete'); } catch (e) {} // la pubblicità esce ORA, prima che il livello e la coda partano
+        hideAll(); game.continueAfterVictory();
         if (game.session && game.session.bonus) { game.pause(); dialog(T('bonus.title'), T('bonus.body'), [{ label: T('bonus.go'), primary: true, fn: () => game.resume() }]); }
       };
-      $('vHome').onclick = () => { click(); game.goHome(); showHome(); monet.maybeInterstitial('level_complete'); };
+      $('vHome').onclick = async () => { click(); $('vHome').disabled = true; try { await monet.maybeInterstitial('level_complete'); } catch (e) {} game.goHome(); showHome(); };
       $('vDouble').onclick = async () => {
         click(); $('vDouble').disabled = true; const r = await game.doubleReward();
         if (r.granted) { $('vMsg').textContent = T('vic.doubled') + ' +' + (r.added || 0) + ' ◉'; $('vDouble').hidden = true; updateBar(); }

@@ -7,6 +7,7 @@
   const BB = (g.BB = g.BB || {});
 
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  const withTimeout = (p, ms) => Promise.race([Promise.resolve(p), new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))]);
 
   BB.createNativeProvider = function (deps) {
     const { AdMob, store, ProductType, Platform, ErrorCode, platform, config } = deps;
@@ -62,6 +63,7 @@
         if (canRequest) {
           try { await AdMob.initialize({ initializeForTesting: testMode }); this.adsReady = true; } catch (e) { this.adsReady = false; }
         }
+        this.preloadInterstitial();
         // 4) acquisti
         try { await this._initStore(); } catch (e) { this.storeReady = false; }
       }
@@ -120,7 +122,10 @@
       async showInterstitial() {
         await this.initialize();
         if (!this.adsReady || !ids.interstitial) return { status: 'unavailable' };
-        try { await AdMob.prepareInterstitial({ adId: ids.interstitial, isTesting: testMode }); } catch (e) { return { status: 'unavailable' }; }
+        if (!this._intReady) {
+          try { await withTimeout(AdMob.prepareInterstitial({ adId: ids.interstitial, isTesting: testMode }), 5000); } catch (e) { return { status: 'unavailable' }; }
+        }
+        this._intReady = false;
         return new Promise((resolve) => {
           let shown = false, settled = false;
           const handles = [];
@@ -128,6 +133,7 @@
           const finish = (st) => {
             if (settled) return; settled = true; clearTimeout(timer);
             handles.forEach((h) => { try { h.remove(); } catch (e) {} });
+            this.preloadInterstitial(); // prepara già il prossimo
             resolve({ status: st });
           };
           timer = setTimeout(() => finish(shown ? 'shown' : 'error'), 120000);
@@ -138,6 +144,13 @@
             try { await AdMob.showInterstitial(); } catch (e) { finish('error'); }
           })();
         });
+      }
+      // prepara in anticipo l'annuncio di fine livello, così al tocco di "Continua" parte subito
+      preloadInterstitial() {
+        if (!this.adsReady || !ids.interstitial || this._intReady || this._intLoading) return;
+        this._intLoading = true;
+        Promise.resolve(AdMob.prepareInterstitial({ adId: ids.interstitial, isTesting: testMode }))
+          .then(() => { this._intReady = true; }).catch(() => {}).then(() => { this._intLoading = false; });
       }
       async showPrivacyOptions() {
         await this.initialize();
