@@ -137,7 +137,9 @@ body.keg #kegBtn{display:block} body.keg #row,body.keg #picker,body.keg #tiltStr
 @media (prefers-reduced-motion: reduce) { .pick.bad { animation: none; } }
 
 /* schermate e pannelli */
-.screen { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: calc(20px + var(--sat)) calc(16px + var(--sar)) calc(20px + var(--sab)) calc(16px + var(--sal)); background: rgba(8,10,9,.78); backdrop-filter: blur(3px); overflow-y: auto; touch-action: pan-y; }
+.screen { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: calc(20px + var(--sat)) calc(16px + var(--sar)) calc(20px + var(--sab)) calc(16px + var(--sal)); background: rgba(8,10,9,.78); backdrop-filter: blur(3px); overflow-y: auto; touch-action: pan-y; }
+.screen::before,.screen::after{content:"";margin:auto;flex:0 0 0}
+@media (max-height:760px){.screen{padding-top:calc(10px + var(--sat));padding-bottom:calc(10px + var(--sab))}.panel{padding:14px 16px 12px;gap:9px}.panel h2{font-size:22px}}
 .screen.solid { background: radial-gradient(120% 80% at 50% 0%, #2b3a33 0%, #101a16 60%); }
 .panel { width: 100%; max-width: 380px; background: linear-gradient(180deg, var(--panel-2), var(--panel)); border: 1px solid var(--brass-dark); border-radius: 18px; padding: 18px 18px 16px; box-shadow: 0 14px 40px rgba(0,0,0,.6); display: flex; flex-direction: column; gap: 12px; }
 .chip#barInfo { white-space: pre-line; line-height: 1.15; text-align: center; font-size: 14px; }
@@ -3603,7 +3605,7 @@ input[type=range] { width: 100%; accent-color: var(--amber); height: 32px; }
     const cleanNick = (v) => String(v || '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^A-Za-z0-9 ._-]/g, '').replace(/\s+/g, ' ').trim().slice(0, 14);
     const nickOk = (v) => /^[A-Za-z0-9 ._-]{3,14}$/.test(v);
     // ---------- condivisione e sfide ----------
-    const WEB_URL = 'https://christiancolnago.github.io/beergame/';
+    const WEB_URL = 'https://christiancolnago.github.io/publican/';
     const baseUrl = () => ((!BB.nativeProvider && /^https?:$/.test(location.protocol)) ? location.origin + location.pathname : WEB_URL);
     function makeCard(info) {
       const W = 1080, H = 1350, cv = document.createElement('canvas'); cv.width = W; cv.height = H; const c = cv.getContext('2d');
