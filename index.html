@@ -823,6 +823,9 @@ input[type=range] { width: 100%; accent-color: var(--amber); height: 32px; }
     // testa
     c.beginPath(); c.arc(0, 0, R, 0, TAU); c.fill();
     c.fillStyle = 'rgba(230,100,90,' + (F ? 0.22 : 0.14) + ')'; c.beginPath(); c.arc(-R * 0.6, R * 0.3, R * 0.2, 0, TAU); c.arc(R * 0.6, R * 0.3, R * 0.2, 0, TAU); c.fill();
+    // naso (leggero, solo ombreggiatura)
+    c.fillStyle = 'rgba(120,60,40,0.2)'; c.beginPath(); c.ellipse(0, R * 0.2, R * 0.09, R * 0.1, 0, 0, TAU); c.fill();
+    c.fillStyle = 'rgba(255,255,255,0.22)'; c.beginPath(); c.ellipse(-R * 0.03, R * 0.16, R * 0.03, R * 0.05, 0, 0, TAU); c.fill();
     // segni del viso
     if (L.face === 1) { c.fillStyle = 'rgba(120,70,40,0.65)'; [[-0.5, 0.22], [-0.36, 0.3], [-0.62, 0.34], [0.5, 0.22], [0.36, 0.3], [0.62, 0.34], [-0.4, 0.14], [0.4, 0.14]].forEach((p) => { c.beginPath(); c.arc(p[0] * R, p[1] * R, R * 0.035, 0, TAU); c.fill(); }); }
     if (L.face === 2) { c.fillStyle = '#3a2418'; c.beginPath(); c.arc(R * 0.42, R * 0.42, R * 0.045, 0, TAU); c.fill(); }
@@ -864,12 +867,21 @@ input[type=range] { width: 100%; accent-color: var(--amber); height: 32px; }
     }
     // barba (dietro bocca)
     c.fillStyle = hc;
-    const fullBeard = () => { c.beginPath(); c.moveTo(-R * 0.97, R * 0.1); c.quadraticCurveTo(-R * 0.95, R * 1.15, 0, R * 1.18); c.quadraticCurveTo(R * 0.95, R * 1.15, R * 0.97, R * 0.1); c.quadraticCurveTo(R * 0.6, R * 0.42, 0, R * 0.4); c.quadraticCurveTo(-R * 0.6, R * 0.42, -R * 0.97, R * 0.1); c.fill(); };
+    const beardPath = () => { c.beginPath(); c.moveTo(-R * 0.97, R * 0.1); c.quadraticCurveTo(-R * 0.95, R * 1.15, 0, R * 1.18); c.quadraticCurveTo(R * 0.95, R * 1.15, R * 0.97, R * 0.1); c.quadraticCurveTo(R * 0.6, R * 0.42, 0, R * 0.4); c.quadraticCurveTo(-R * 0.6, R * 0.42, -R * 0.97, R * 0.1); c.closePath(); };
+    const fullBeard = () => { beardPath(); c.fill(); };
     if (L.beard === 2) fullBeard();
-    if (L.beard === 4) { c.save(); c.globalAlpha = 0.3; fullBeard(); c.restore(); }
+    if (L.beard === 4) { // barba corta: ombra leggerissima e griglia regolare di puntini (pelo corto, pulito)
+      c.save(); beardPath(); c.clip(); c.beginPath(); c.arc(0, 0, R * 0.99, 0, TAU); c.clip(); c.fillStyle = hc; c.globalAlpha = 0.1; c.fillRect(-R, 0, R * 2, R * 1.3); c.globalAlpha = 0.78;
+      const st = Math.max(3, R * 0.09), rd = Math.max(0.7, R * 0.02);
+      for (let row = 0, yy = R * 0.12; yy < R * 1.1; row++, yy += st * 0.866) for (let xx = -R + (row % 2 ? st / 2 : 0); xx < R; xx += st) { c.beginPath(); c.arc(xx, yy, rd, 0, TAU); c.fill(); }
+      c.restore();
+    }
     if (L.beard === 3) { c.beginPath(); c.ellipse(0, R * 0.88, R * 0.24, R * 0.3, 0, 0, TAU); c.fill(); }
     if (L.beard === 1 || L.beard === 3) { c.beginPath(); c.ellipse(-R * 0.2, R * 0.38, R * 0.24, R * 0.1, -0.25, 0, TAU); c.ellipse(R * 0.2, R * 0.38, R * 0.24, R * 0.1, 0.25, 0, TAU); c.fill(); }
-    if (L.beard === 5) { c.strokeStyle = hc; c.lineWidth = R * 0.11; c.beginPath(); c.moveTo(0, R * 0.38); c.quadraticCurveTo(-R * 0.45, R * 0.46, -R * 0.62, R * 0.28); c.quadraticCurveTo(-R * 0.66, R * 0.2, -R * 0.58, R * 0.16); c.moveTo(0, R * 0.38); c.quadraticCurveTo(R * 0.45, R * 0.46, R * 0.62, R * 0.28); c.quadraticCurveTo(R * 0.66, R * 0.2, R * 0.58, R * 0.16); c.stroke(); }
+    if (L.beard === 5) { // baffi "a ferro di cavallo" (alla Hulk Hogan): una U rovesciata, i lati scendono ai lati della bocca
+      c.fillStyle = hc; c.beginPath(); c.moveTo(-R * 0.5, R * 0.44); c.quadraticCurveTo(0, R * 0.24, R * 0.5, R * 0.44); c.lineTo(R * 0.3, R * 0.56); c.quadraticCurveTo(0, R * 0.44, -R * 0.3, R * 0.56); c.closePath(); c.fill();
+      [-1, 1].forEach((d) => { c.beginPath(); c.moveTo(d * R * 0.5, R * 0.42); c.bezierCurveTo(d * R * 0.54, R * 0.6, d * R * 0.52, R * 0.82, d * R * 0.45, R * 0.97); c.quadraticCurveTo(d * R * 0.38, R * 1.0, d * R * 0.34, R * 0.92); c.bezierCurveTo(d * R * 0.35, R * 0.78, d * R * 0.34, R * 0.64, d * R * 0.3, R * 0.54); c.closePath(); c.fill(); });
+    }
     c.strokeStyle = L.beard === 2 ? '#f3d9c4' : '#1b1b1b'; c.lineWidth = Math.max(1.5, R * 0.07); c.beginPath();
     if (mood === 'happy') c.arc(0, R * 0.46, R * 0.3, 0.2, Math.PI - 0.2);
     else if (mood === 'angry') c.arc(0, R * 0.78, R * 0.26, Math.PI * 1.15, Math.PI * 1.85);
