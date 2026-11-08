@@ -3629,7 +3629,7 @@ input[type=range] { width: 100%; accent-color: var(--amber); height: 32px; }
     // ---------- condivisione e sfide ----------
     const WEB_URL = 'https://christiancolnago.github.io/publican/';
     const PLAY_URL = 'https://play.google.com/store/apps/details?id=it.chriszimbu.publican';
-    const isAndroidApp = () => !!(BB.nativeProvider && BB.nativeProvider.platform === 'android');
+    const isAndroidApp = () => { try { return !!(BB.nativeProvider && (BB.nativeProvider.platform === 'android' || (window.Capacitor && window.Capacitor.getPlatform && window.Capacitor.getPlatform() === 'android'))); } catch (e) { return false; } };
     const baseUrl = () => ((!BB.nativeProvider && /^https?:$/.test(location.protocol)) ? location.origin + location.pathname : WEB_URL);
     function makeCard(info) {
       const W = 1080, H = 1350, cv = document.createElement('canvas'); cv.width = W; cv.height = H; const c = cv.getContext('2d');

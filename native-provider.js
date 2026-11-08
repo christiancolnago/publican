@@ -22,6 +22,7 @@
 
     class NativeProvider {
       constructor() {
+        this.platform = platform; // 'android' | 'ios': il gioco lo usa per scegliere il link di condivisione
         this.isTest = false;
         this.adsReady = false;
         this.storeReady = false;
