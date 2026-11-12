@@ -1119,7 +1119,7 @@ input[type=range] { width: 100%; accent-color: var(--amber); height: 32px; }
     { id: 'brewery', name: 'Birreria', fromLevel: 13, wall: ['#38302a', '#19130f'], accent: '#e46f3a', counter: ['#8a5a2b', '#4a2f14'] },
   ];
 
-  BB.CONFIG = { flowRate: 85, lives: 3, passScore: 55, saveKey: 'bb_save_v2', perLevel: 4, perLevelFor: (lv, bonus) => (bonus || lv < 4) ? 4 : Math.min(8, 4 + Math.floor((lv - 2) / 2)), lostPerHeart: 1, maxHearts: 4, heartCost: 1000 };
+  BB.CONFIG = { flowRate: 85, lives: 3, passScore: 55, saveKey: 'bb_save_v2', perLevel: 4, perLevelFor: (lv, bonus) => (bonus || lv < 4) ? 4 : Math.min(12, 4 + Math.floor((lv - 2) / 2)), lostPerHeart: 1, maxHearts: 4, heartCost: 1000 };
 })(typeof globalThis !== 'undefined' ? globalThis : this);
 
 /* ---- glassgeo.js ---- */
@@ -1558,7 +1558,13 @@ input[type=range] { width: 100%; accent-color: var(--amber); height: 32px; }
   const LevelManager = {
     // Coda in tempo reale: capienza, ritmo degli arrivi (s) e pazienza base (s) dipendono dal livello.
     rules(level) {
-      return { maxQueue: level < 3 ? 3 : 4, interval: Math.max(9, 21 - 1.0 * (level - 1)), patience: Math.max(28, 80 - 4 * (level - 1)), startCount: 2 };
+      // fino al livello 8 tutto come prima; poi la sfida cresce: coda più lunga (5 dal 9), arrivi più ravvicinati e clienti più impazienti
+      return {
+        maxQueue: level < 3 ? 3 : level < 9 ? 4 : 5,
+        interval: level <= 8 ? Math.max(9, 21 - 1.0 * (level - 1)) : Math.max(9, 14 - 0.8 * (level - 8)),
+        patience: level <= 8 ? 80 - 4 * (level - 1) : Math.max(40, 52 - 3 * (level - 8)),
+        startCount: level < 9 ? 2 : 3,
+      };
     },
     unlockedStyles(level) { return BB.STYLE_ORDER.filter((id) => BB.STYLES[id].unlockLevel <= level); },
     unlockedGlasses(level) {
@@ -1767,9 +1773,12 @@ input[type=range] { width: 100%; accent-color: var(--amber); height: 32px; }
       this.clock = clock || (() => Date.now());
       this.interstitialEvery = 3;       // ogni N livelli completati
       this.minGapMs = 90000;
-      this.completions = 0; this.lastInterstitial = 0;
+      this.completions = 0; this.lastInterstitial = 0; this.sinceAd = 0; this.lastRewarded = 0;
       this.busy = false;
+      // il conteggio dei livelli sopravvive alla chiusura dell'app (altrimenti chi gioca poco non vede mai l'annuncio)
+      try { const o = JSON.parse(g.localStorage.getItem('bb_ads_v1') || 'null'); if (o) { this.sinceAd = o.sinceAd | 0; this.lastInterstitial = +o.lastInterstitial || 0; this.lastRewarded = +o.lastRewarded || 0; } } catch (e) {}
     }
+    _persist() { try { g.localStorage.setItem('bb_ads_v1', JSON.stringify({ sinceAd: this.sinceAd, lastInterstitial: this.lastInterstitial, lastRewarded: this.lastRewarded })); } catch (e) {} }
     get adsRemoved() { return !!this.save.data.purchases.adsRemoved; }
     get isTestMode() { return !!(this.provider && this.provider.isTest); }
 
@@ -1787,13 +1796,13 @@ input[type=range] { width: 100%; accent-color: var(--amber); height: 32px; }
     // Interstitial: solo su schermate di risultato, mai in spillatura, con frequenza limitata, mai con "rimuovi pubblicità".
     async maybeInterstitial(context) {
       if (context !== 'level_complete' || this.adsRemoved) return { shown: false, status: 'skipped' };
-      this.completions++;
+      this.completions++; this.sinceAd++; this._persist();
       const now = this.clock();
-      if (this.completions % this.interstitialEvery !== 0) return { shown: false, status: 'frequency' };
+      if (this.sinceAd < this.interstitialEvery) return { shown: false, status: 'frequency' };
       if (this.lastInterstitial && now - this.lastInterstitial < this.minGapMs) return { shown: false, status: 'cooldown' };
       try {
         const r = await this.provider.showInterstitial();
-        if (r.status === 'shown') this.lastInterstitial = now;
+        if (r.status === 'shown') { this.lastInterstitial = now; this.sinceAd = 0; this._persist(); } // se non era disponibile, riprova al livello dopo
         return { shown: r.status === 'shown', status: r.status };
       } catch (e) { return { shown: false, status: 'error' }; }
     }

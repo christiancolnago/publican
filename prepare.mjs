@@ -32,4 +32,6 @@ const cc = JSON.parse(fs.readFileSync('capacitor.config.json', 'utf8'));
 cc.appId = cfg.appId; cc.appName = cfg.appName;
 fs.writeFileSync('capacitor.config.json', JSON.stringify(cc, null, 2));
 console.log('Preparato www/ per', cfg.appId, cfg.testMode ? '(annunci di PROVA)' : '(annunci REALI)');
-if (!cfg.testMode && /3940256099942544/.test(JSON.stringify(cfg.admob))) throw new Error('testMode è false ma ci sono ancora i codici di prova di Google in app.config.json');
+const testIds = (o) => /3940256099942544/.test(JSON.stringify(o));
+if (!cfg.testMode && testIds({ a: cfg.admob.androidAppId, r: cfg.admob.android })) throw new Error('testMode è false ma per Android ci sono ancora i codici di prova di Google in app.config.json');
+if (!cfg.testMode && testIds({ a: cfg.admob.iosAppId, r: cfg.admob.ios })) console.warn('ATTENZIONE: gli ID iOS sono ancora quelli di prova (va bene finché non pubblichi su iPhone).');

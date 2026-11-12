@@ -1,20 +1,20 @@
 {
   "appId": "it.chriszimbu.publican",
   "appName": "The Publican",
-  "versionName": "1.0.10",
+  "versionName": "1.0.14",
   "testMode": true,
   "removeAdsProductId": "remove_ads",
   "admob": {
-    "androidAppId": "ca-app-pub-3940256099942544~3347511713",
+    "androidAppId": "ca-app-pub-2480327648778612~7706560549",
     "iosAppId": "ca-app-pub-3940256099942544~1458002511",
     "android": {
-      "rewarded": "ca-app-pub-3940256099942544/5224354917",
-      "interstitial": "ca-app-pub-3940256099942544/1033173712"
+      "rewarded": "ca-app-pub-2480327648778612/4924152362",
+      "interstitial": "ca-app-pub-2480327648778612/6165740984"
     },
     "ios": {
       "rewarded": "ca-app-pub-3940256099942544/1712485313",
       "interstitial": "ca-app-pub-3940256099942544/4411468910"
     }
   },
-  "_nota": "I codici ca-app-pub-3940256099942544 sono quelli di PROVA di Google (annunci finti, senza guadagno e senza rischio). Prima della pubblicazione: metti testMode a false e sostituisci con i tuoi codici AdMob."
+  "_nota": "Android: ID REALI di AdMob. Con testMode=true gli annunci restano di PROVA (anche con gli ID reali): usalo per i test. Per la produzione metti testMode a false. Gli ID iOS sono ancora quelli di prova di Google: vanno sostituiti quando si fa la versione iPhone."
 }
