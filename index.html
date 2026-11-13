@@ -278,7 +278,17 @@ input[type=range] { width: 100%; accent-color: var(--amber); height: 32px; }
 #scrShop,#scrAch{justify-content:flex-start}#scrShop .panel,#scrAch .panel{margin:auto 0}
 @media (prefers-reduced-motion: reduce){.cf{display:none}}
 </style>
-</head>
+<style id="minimal-preview">
+#bar .chip{background:none;border:0;padding:0 2px;text-shadow:0 1px 3px rgba(0,0,0,.8)}
+#bar .iconbtn{background:none;border:0;width:34px;height:34px}
+#bar .iconbtn svg{width:20px;height:20px;opacity:.9}
+#bar .grow{font-size:15px;opacity:.85}
+.qc{background:none;border:0;padding:2px 2px 4px;max-width:96px}
+.qc.sel{background:rgba(0,0,0,.35);outline:1px solid rgba(200,150,50,.75);outline-offset:-1px;border-radius:12px}
+.qc .nm{font-size:11px;opacity:.85}
+.qc .bar{height:3px}
+#order{background:none;border:0;box-shadow:none;padding:0 4px}
+</style></head>
 <body>
 <div id="app"><noscript style="color:#fff;padding:20px;display:block">Serve JavaScript attivo per giocare.</noscript>
   <div id="rot" data-i="rot.msg">Ruota il telefono in verticale</div>
@@ -1771,8 +1781,8 @@ input[type=range] { width: 100%; accent-color: var(--amber); height: 32px; }
     constructor(provider, save, clock) {
       this.provider = provider; this.save = save;
       this.clock = clock || (() => Date.now());
-      this.interstitialEvery = 3;       // ogni N livelli completati
-      this.minGapMs = 90000;
+      this.interstitialEvery = 1;       // ogni livello completato
+      this.minGapMs = 0;
       this.completions = 0; this.lastInterstitial = 0; this.sinceAd = 0; this.lastRewarded = 0;
       this.busy = false;
       // il conteggio dei livelli sopravvive alla chiusura dell'app (altrimenti chi gioca poco non vede mai l'annuncio)
@@ -1794,8 +1804,9 @@ input[type=range] { width: 100%; accent-color: var(--amber); height: 32px; }
     }
 
     // Interstitial: solo su schermate di risultato, mai in spillatura, con frequenza limitata, mai con "rimuovi pubblicità".
-    async maybeInterstitial(context) {
+    async maybeInterstitial(context, level) {
       if (context !== 'level_complete' || this.adsRemoved) return { shown: false, status: 'skipped' };
+      if (level != null && level % 2 !== 0) return { shown: false, status: 'odd-level' }; // solo ai livelli pari (2, 4, 6…)
       this.completions++; this.sinceAd++; this._persist();
       const now = this.clock();
       if (this.sinceAd < this.interstitialEvery) return { shown: false, status: 'frequency' };
@@ -3121,23 +3132,40 @@ input[type=range] { width: 100%; accent-color: var(--amber); height: 32px; }
     }
 
     drawTap(open, flowLevel) {
+      // rubinetto da spina visto di profilo: colonna a destra, canna orizzontale, corpo, beccuccio verso il basso, leva sopra il corpo
       const c = this.ctx, W = this.W, H = this.H, x = W / 2, y = H * 0.305, K = 1.7;
       const sk = this.tapSkin || BB.Meta.TAPS[0];
       const colTopAbs = Math.max(y - H * 0.075, (this.topInset || 0) + 95), colTop = (colTopAbs - y) / K;
-      // alone caldo dietro il rubinetto per staccarlo dallo sfondo
-      const gl = c.createRadialGradient(x + 10, y, 4, x + 10, y, 90); gl.addColorStop(0, 'rgba(255,214,120,0.34)'); gl.addColorStop(1, 'rgba(255,214,120,0)');
+      const gl = c.createRadialGradient(x + 10, y, 4, x + 10, y, 90); gl.addColorStop(0, 'rgba(255,214,120,0.30)'); gl.addColorStop(1, 'rgba(255,214,120,0)');
       c.fillStyle = gl; c.fillRect(x - 100, y - 100, 220, 200);
       c.save(); c.translate(x, y); c.scale(K, K);
-      const gx = c.createLinearGradient(-14, 0, 40, 0); gx.addColorStop(0, sk.c[0]); gx.addColorStop(0.45, sk.c[1]); gx.addColorStop(1, sk.c[2]);
-      c.fillStyle = gx; c.strokeStyle = '#1a1208'; c.lineWidth = 1.6; c.lineJoin = 'round';
-      c.fillRect(26, colTop, 12, -colTop + 10); c.strokeRect(26, colTop, 12, -colTop + 10);        // colonna
-      c.beginPath(); c.rect(-12, -8, 56, 14); c.fill(); c.stroke();                                // braccio
-      c.beginPath(); c.moveTo(-9, 6); c.lineTo(9, 6); c.lineTo(5, 20); c.lineTo(-5, 20); c.closePath(); c.fill(); c.stroke(); // beccuccio
-      c.fillStyle = 'rgba(255,255,255,0.55)'; c.fillRect(-10, -6, 52, 3); c.fillRect(28, colTop + 2, 3, -colTop + 4); // riflessi
-      c.save(); c.translate(32, colTop - 6); c.rotate(open ? 0.7 : 0);
-      c.fillStyle = '#2a1a10'; c.strokeStyle = '#0d0803'; c.fillRect(-4, -34, 8, 40); c.strokeRect(-4, -34, 8, 40);
-      c.fillStyle = sk.knob; c.beginPath(); c.arc(0, -36, 9, 0, 7); c.fill(); c.stroke();
-      c.fillStyle = 'rgba(255,255,255,0.5)'; c.beginPath(); c.arc(-3, -39, 3, 0, 7); c.fill(); c.restore();
+      const ink = '#1a1208'; c.lineJoin = 'round'; c.lineCap = 'round'; c.lineWidth = 1.5; c.strokeStyle = ink;
+      const vg = (x0, x1) => { const g = c.createLinearGradient(x0, 0, x1, 0); g.addColorStop(0, sk.c[0]); g.addColorStop(0.42, sk.c[1]); g.addColorStop(1, sk.c[2]); return g; };
+      const hg = (y0, y1) => { const g = c.createLinearGradient(0, y0, 0, y1); g.addColorStop(0, sk.c[1]); g.addColorStop(0.35, sk.c[0]); g.addColorStop(1, sk.c[2]); return g; };
+      // colonna (torre)
+      c.fillStyle = vg(30, 46); c.beginPath(); c.rect(30, colTop, 16, -colTop + 14); c.fill(); c.stroke();
+      c.fillStyle = 'rgba(255,255,255,0.45)'; c.fillRect(33, colTop + 3, 3, -colTop + 8);
+      c.fillStyle = vg(28, 48); c.beginPath(); c.rect(27, colTop - 4, 22, 6); c.fill(); c.stroke();           // cappello colonna
+      // canna orizzontale
+      c.fillStyle = hg(-7, 5); c.beginPath(); c.rect(6, -7, 25, 12); c.fill(); c.stroke();
+      c.fillStyle = 'rgba(255,255,255,0.5)'; c.fillRect(8, -5, 21, 2.2);
+      // dado esagonale tra canna e corpo
+      c.fillStyle = hg(-10, 8); c.beginPath(); c.rect(2, -10, 7, 18); c.fill(); c.stroke();
+      // corpo del rubinetto
+      c.fillStyle = hg(-12, 10); c.beginPath(); c.moveTo(-13, -8); c.quadraticCurveTo(-13, -12, -8, -12); c.lineTo(2, -12); c.lineTo(2, 8); c.lineTo(-8, 8); c.quadraticCurveTo(-13, 8, -13, 3); c.closePath(); c.fill(); c.stroke();
+      c.fillStyle = 'rgba(255,255,255,0.5)'; c.fillRect(-10, -10, 11, 2.2);
+      // beccuccio: parte dal corpo e scende verticale, il centro del tubo è a x = 0 come il flusso
+      c.fillStyle = vg(-6, 6); c.beginPath(); c.moveTo(-6, 8); c.lineTo(6, 8); c.lineTo(4.2, 19); c.lineTo(-4.2, 19); c.closePath(); c.fill(); c.stroke();
+      c.fillStyle = hg(17, 21); c.beginPath(); c.rect(-5.4, 17, 10.8, 3.4); c.fill(); c.stroke();
+      c.fillStyle = 'rgba(255,255,255,0.5)'; c.fillRect(-3.4, 10, 1.8, 6);
+      // leva: perno sopra il corpo; chiusa quasi dritta, aperta tirata verso chi serve (a sinistra)
+      c.save(); c.translate(-5, -12); c.rotate(open ? -0.78 : 0.1);
+      c.fillStyle = hg(-3, 4); c.beginPath(); c.rect(-3.6, -3, 7.2, 7); c.fill(); c.stroke();                 // base
+      c.fillStyle = '#2a1a10'; c.strokeStyle = '#0d0803';
+      c.beginPath(); c.moveTo(-2.6, -3); c.lineTo(2.6, -3); c.lineTo(3.8, -34); c.quadraticCurveTo(0, -39, -3.8, -34); c.closePath(); c.fill(); c.stroke();   // impugnatura rastremata
+      c.fillStyle = sk.knob; c.beginPath(); c.rect(-3.4, -9, 6.8, 3.4); c.fill(); c.stroke();                    // ghiera
+      c.fillStyle = 'rgba(255,255,255,0.28)'; c.fillRect(-1.6, -30, 1.3, 20);
+      c.restore();
       c.restore();
       this.spout = { x, y: y + 20 * K };
     }
@@ -4180,11 +4208,11 @@ input[type=range] { width: 100%; accent-color: var(--amber); height: 32px; }
         click();
         $('vNext').disabled = true;
         if (zimDue(v.level) && !v.bonus) { await showZim(); }
-        try { await monet.maybeInterstitial('level_complete'); } catch (e) {} // la pubblicità esce ORA, prima che il livello e la coda partano
+        try { if (!v.bonus) await monet.maybeInterstitial('level_complete', v.level); } catch (e) {} // la pubblicità esce ORA, prima che il livello e la coda partano
         hideAll(); game.continueAfterVictory();
         if (game.session && game.session.bonus) { game.pause(); dialog(T('bonus.title'), T('bonus.body'), [{ label: T('bonus.go'), primary: true, fn: () => game.resume() }]); }
       };
-      $('vHome').onclick = async () => { click(); $('vHome').disabled = true; try { await monet.maybeInterstitial('level_complete'); } catch (e) {} game.goHome(); showHome(); };
+      $('vHome').onclick = async () => { click(); $('vHome').disabled = true; try { if (!v.bonus) await monet.maybeInterstitial('level_complete', v.level); } catch (e) {} game.goHome(); showHome(); };
       $('vDouble').onclick = async () => {
         click(); $('vDouble').disabled = true; const r = await game.doubleReward();
         if (r.granted) { $('vMsg').textContent = T('vic.doubled') + ' +' + (r.added || 0) + ' ◉'; $('vDouble').hidden = true; updateBar(); }
