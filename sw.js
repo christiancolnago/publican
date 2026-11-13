@@ -1,4 +1,4 @@
-const C="bb-v988";
+const C="bb-v989";
 self.addEventListener("install",e=>{self.skipWaiting();});
 self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==C).map(x=>caches.delete(x)))).then(()=>self.clients.claim()));});
 self.addEventListener("fetch",e=>{ if(e.request.method!=="GET")return; const u=new URL(e.request.url); if(u.origin!==location.origin)return;

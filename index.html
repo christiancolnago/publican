@@ -3133,9 +3133,13 @@ input[type=range] { width: 100%; accent-color: var(--amber); height: 32px; }
 
     drawTap(open, flowLevel) {
       // rubinetto da spina visto di profilo: colonna a destra, canna orizzontale, corpo, beccuccio verso il basso, leva sopra il corpo
-      const c = this.ctx, W = this.W, H = this.H, x = W / 2, y = H * 0.305, K = 1.7;
+      const c = this.ctx, W = this.W, H = this.H, x = W / 2, K = 1.7;
       const sk = this.tapSkin || BB.Meta.TAPS[0];
-      const colTopAbs = Math.max(y - H * 0.075, (this.topInset || 0) + 95), colTop = (colTopAbs - y) / K;
+      // se l'interfaccia in alto occupa più spazio (coda + ordine) il rubinetto scende, così la colonna resta sempre intera e attaccata
+      const topI = this.topInset || 0, targetY = Math.max(H * 0.305, topI + 70);
+      this.tapY = (this.tapY == null || Math.abs(this.tapY - targetY) < 0.5) ? targetY : this.tapY + (targetY - this.tapY) * 0.25;
+      const y = this.tapY;
+      const colTopAbs = Math.min(Math.max(y - H * 0.075, topI + 6), y - 60), colTop = (colTopAbs - y) / K;
       const gl = c.createRadialGradient(x + 10, y, 4, x + 10, y, 90); gl.addColorStop(0, 'rgba(255,214,120,0.30)'); gl.addColorStop(1, 'rgba(255,214,120,0)');
       c.fillStyle = gl; c.fillRect(x - 100, y - 100, 220, 200);
       c.save(); c.translate(x, y); c.scale(K, K);
@@ -3414,7 +3418,7 @@ input[type=range] { width: 100%; accent-color: var(--amber); height: 32px; }
       let mood = 'neutral', impatient = false;
       if (game.result) mood = game.result.mood;
       else impatient = game.order.wait > game.order.waitLimit * 0.7;
-      this.drawCustomer(game.order, mood, impatient);
+      if (!game.model || !game.glass || game.result) this.drawCustomer(game.order, mood, impatient); // durante la spillatura il cliente non si vede
       if (game.session && game.session.bonus) this.drawBonusLogo();
       this.drawTap(!!game.model && game.model.flow > 0.1, game.model ? game.model.flow : 0);
       if (!game.model || !game.glass) return;
@@ -4199,12 +4203,15 @@ input[type=range] { width: 100%; accent-color: var(--amber); height: 32px; }
         '<div class="score">' + v.avgScore + '<small>' + T('vic.avg') + '</small></div>' +
         '<div class="coins">' + T('vic.coins', { n: v.coins }) + '</div>' + unl +
         (LB().run.score > 0 ? '<div class="live" style="text-align:center">' + esc(T('ser.runNow', { n: fmtN(LB().run.score), s: LB().run.served })) + '</div>' : '') +
-        '<button class="btn" id="vDouble">' + T('vic.double') + ' · +' + (v.dbl || v.coins) + ' ◉</button><div class="live" id="vMsg" style="text-align:center"></div>' +
+        '<button class="btn" id="vDouble">' + T('vic.double') + ' · +' + (v.dbl || v.coins) + ' ◉</button><div class="live" id="vMsg" style="text-align:center;min-height:1.4em"></div>' +
         '<button class="btn primary" id="vNext">' + T('continue') + '</button><button class="btn" id="vTips">🍺 ' + T('bt.btn') + '</button><button class="btn" id="vShop">🛒 ' + T('vic.shop') + '</button><button class="btn ghost" id="vHome">' + T('home') + '</button>';
       show('scrVictory'); confetti($('scrVictory'));
       $('vShop').onclick = () => { click(); openShop('victory'); };
       $('vTips').onclick = () => { click(); openTips(v.level + 1); };
+      let lockUntil = 0, freshDown = 0;
+      $('vNext').addEventListener('pointerdown', () => { freshDown = Date.now(); });
       $('vNext').onclick = async () => {
+        if (Date.now() < lockUntil || Date.now() - freshDown > 1500) return; // dopo un video un tocco fantasma non deve far partire il livello
         click();
         $('vNext').disabled = true;
         if (zimDue(v.level) && !v.bonus) { await showZim(); }
@@ -4212,10 +4219,11 @@ input[type=range] { width: 100%; accent-color: var(--amber); height: 32px; }
         hideAll(); game.continueAfterVictory();
         if (game.session && game.session.bonus) { game.pause(); dialog(T('bonus.title'), T('bonus.body'), [{ label: T('bonus.go'), primary: true, fn: () => game.resume() }]); }
       };
-      $('vHome').onclick = async () => { click(); $('vHome').disabled = true; try { if (!v.bonus) await monet.maybeInterstitial('level_complete', v.level); } catch (e) {} game.goHome(); showHome(); };
+      $('vHome').onclick = async () => { if (Date.now() < lockUntil) return; click(); $('vHome').disabled = true; try { if (!v.bonus) await monet.maybeInterstitial('level_complete', v.level); } catch (e) {} game.goHome(); showHome(); };
       $('vDouble').onclick = async () => {
-        click(); $('vDouble').disabled = true; const r = await game.doubleReward();
-        if (r.granted) { $('vMsg').textContent = T('vic.doubled') + ' +' + (r.added || 0) + ' ◉'; $('vDouble').hidden = true; updateBar(); }
+        click(); $('vDouble').disabled = true; $('vNext').disabled = true; lockUntil = Date.now() + 600000; const r = await game.doubleReward(); lockUntil = Date.now() + 2500;
+        setTimeout(() => { try { $('vNext').disabled = false; } catch (e) {} }, 2500); // dopo il video un tocco fantasma non deve premere Continua
+        if (r.granted) { $('vMsg').textContent = T('vic.doubled') + ' +' + (r.added || 0) + ' ◉'; $('vDouble').style.visibility = 'hidden'; updateBar(); }
         else { $('vDouble').disabled = false; $('vMsg').textContent = T(r.status === 'dismissed' ? 'vic.adDismissed' : r.status === 'unavailable' ? 'ad.none' : 'vic.adFailed'); }
       };
     }
