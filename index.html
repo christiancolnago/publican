@@ -4083,7 +4083,7 @@ input[type=range] { width: 100%; accent-color: var(--amber); height: 32px; }
     game.on('customer', (o) => { renderer.newOrder(); updateOrder(o); updateBar(); setOpen(false); });
     game.on('queue', () => { if (game.session && game.state !== 'home') { renderQueue(); updateBar(); } });
     game.on('left', (e) => {
-      audio.sfx('error'); renderer.shake = 8;
+      setOpen(false); audio.setPour(0, 0, 0, 0); audio.sfx('error'); renderer.shake = 8;
       toast(T('left.toast', { n: e.customer.name }) + (e.heartLost ? T('left.heart') : T('left.more')), 2600);
       updateBar();
     });
@@ -4260,6 +4260,9 @@ input[type=range] { width: 100%; accent-color: var(--amber); height: 32px; }
         if (m) {
           if (open && !prevOpen) audio.sfx('tapOpen'); if (!open && prevOpen) audio.sfx('tapClose'); prevOpen = open;
           if (spOn) audio.setPour(0, 0, 0, 0); else audio.setPour(m.flow, m.turbulence, clamp(m.foam / 80, 0, 1), m.targetVol ? clamp(m.total / m.targetVol, 0, 1) : 0, m.tilt > 62);
+        } else { // nessun bicchiere (es. il cliente se n'è andato mentre spillavi): rubinetto chiuso e suono spento
+          if (open || prevOpen) { open = false; pourBtn.classList.remove('on'); prevOpen = false; }
+          audio.setPour(0, 0, 0, 0);
         }
         updateHud(dt);
       } else { audio.setPour(0, 0, 0, 0); }
