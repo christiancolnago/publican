@@ -3602,7 +3602,7 @@ input[type=range] { width: 100%; accent-color: var(--amber); height: 32px; }
       $('homeStats').hidden = !has;
       if (has) $('homeStats').textContent = T('home.stats', { l: save.data.session ? save.data.session.level : p.level, c: p.coins });
       { const ch = LB().chal, el = $('homeChal'); const on = ch && ch.s > 0 && LB().best < ch.s; el.hidden = !on; if (on) el.textContent = T('chal.banner', { nick: ch.n, n: fmtN(ch.s) }); }
-      $('btnAds').hidden = monet.adsRemoved;
+      $('btnAds').hidden = true; // acquisto «senza pubblicità» non più offerto
       { const pr = provider.priceRemoveAds && provider.priceRemoveAds(); if (pr) $('btnAds').textContent = T('removeAds').replace(/·.*$/, '· ' + pr); }
       $('btnPrivacy').hidden = !(provider.showPrivacyOptions);
       $('homeBadge').textContent = monet.isTestMode ? T('badge.test') : '';
