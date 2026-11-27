@@ -203,6 +203,9 @@ body.keg #kegBtn{display:flex} body.keg #row,body.keg #picker,body.keg #tiltStri
 .facts { font-family: var(--ui); font-size: 15px; font-weight: 500; color: var(--ink-dim); display: grid; gap: 2px; font-variant-numeric: tabular-nums; }
 .tip { background: rgba(255,255,255,.06); border-left: 3px solid var(--amber); border-radius: 6px; padding: 8px 10px; color: var(--ink); line-height: 1.35; }
 .tip.ok { border-color: var(--good); }
+.updBn { display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-size:13px; padding:6px 10px; }
+.updBn a { color: var(--amber); font-weight:700; text-decoration:underline; }
+.updBn button { margin-left:auto; background:none; border:0; color:var(--ink); opacity:.7; font-size:16px; padding:4px 6px; cursor:pointer; }
 .verdict { text-align: center; font-family: var(--ui); font-size: 15px; letter-spacing: .12em; text-transform: uppercase; }
 .verdict.ok { color: var(--good); } .verdict.bad { color: #ff8f78; }
 .row2 { display: flex; gap: 10px; } .row2 > * { flex: 1; }
@@ -332,6 +335,7 @@ input[type=range] { width: 100%; accent-color: var(--amber); height: 32px; }
       <button class="prof" id="btnProfile" aria-label="Avatar"><canvas id="homeAv" width="112" height="112"></canvas><span class="pn" id="homeName"></span><span class="pe">✎</span></button>
       <div class="coins" id="homeStats" hidden></div>
       <div class="tip ok" id="homeChal" hidden></div>
+      <div class="tip updBn" id="homeUpd" hidden><span id="homeUpdTx"></span> <a id="homeUpdGo" href="https://play.google.com/store/apps/details?id=it.chriszimbu.publican" target="_blank" rel="noopener"></a><button type="button" id="homeUpdX" aria-label="X">✕</button></div>
       <button class="btn primary" id="btnContinue" data-i="continue" style="min-height:58px;font-size:20px">Continua</button>
       <button class="btn" id="btnNew" data-i="new" style="min-height:54px">Nuova partita</button>
       <div class="row2"><button class="btn" id="btnBoard" style="min-height:54px">🏆 <span data-i="rec.btn">Record</span></button><button class="btn" id="btnCol" style="min-height:54px">🍺 <span data-i="home.col">Collezione</span></button></div>
@@ -2146,6 +2150,8 @@ input[type=range] { width: 100%; accent-color: var(--amber); height: 32px; }
   Object.keys(S8).forEach((l) => Object.assign(BB.I18n.dict[l], S8[l]));
   const S9 = {"it": {"rec.btn": "Record", "rec.title": "I tuoi record", "rec.desc": "La classifica online è in arrivo. Intanto batti il tuo record e sfida un amico: gli mandi un link con il tuo punteggio e vedi se ti supera.", "rec.bestServed": "Più clienti in una serie", "rec.challenge": "Sfida un amico", "rec.empty": "Concludi una serie per fissare il tuo primo record.", "rec.anon": "Un barman"}, "en": {"rec.btn": "Records", "rec.title": "Your records", "rec.desc": "The online leaderboard is coming. For now, beat your own record and challenge a friend: send them a link with your score and see if they top it.", "rec.bestServed": "Most customers in a streak", "rec.challenge": "Challenge a friend", "rec.empty": "Finish a streak to set your first record.", "rec.anon": "A bartender"}, "fr": {"rec.btn": "Records", "rec.title": "Tes records", "rec.desc": "Le classement en ligne arrive. En attendant, bats ton record et défie un ami : envoie-lui un lien avec ton score et vois s'il te dépasse.", "rec.bestServed": "Plus de clients dans une série", "rec.challenge": "Défier un ami", "rec.empty": "Termine une série pour fixer ton premier record.", "rec.anon": "Un barman"}, "de": {"rec.btn": "Rekorde", "rec.title": "Deine Rekorde", "rec.desc": "Die Online-Rangliste kommt noch. Schlag bis dahin deinen Rekord und fordere einen Freund heraus: Schick ihm einen Link mit deinem Punktestand und schau, ob er dich übertrifft.", "rec.bestServed": "Meiste Gäste in einer Serie", "rec.challenge": "Freund herausfordern", "rec.empty": "Beende eine Serie, um deinen ersten Rekord aufzustellen.", "rec.anon": "Ein Barkeeper"}};
   Object.keys(S9).forEach((l) => Object.assign(BB.I18n.dict[l], S9[l]));
+  const SUPD = {"it": {"upd.tx": "Controlla se hai l'ultima versione del gioco.", "upd.go": "Apri Google Play"}, "en": {"upd.tx": "Check that you have the latest version of the game.", "upd.go": "Open Google Play"}, "fr": {"upd.tx": "Vérifie que tu as la dernière version du jeu.", "upd.go": "Ouvrir Google Play"}, "de": {"upd.tx": "Prüfe, ob du die neueste Version des Spiels hast.", "upd.go": "Google Play öffnen"}};
+  Object.keys(SUPD).forEach((l) => Object.assign(BB.I18n.dict[l], SUPD[l]));
   const S10 = {"it": {"set.privacy": "Preferenze privacy e pubblicità", "priv.none": "Nessuna opzione disponibile al momento."}, "en": {"set.privacy": "Privacy and ads preferences", "priv.none": "No options available right now."}, "fr": {"set.privacy": "Préférences de confidentialité et publicité", "priv.none": "Aucune option disponible pour le moment."}, "de": {"set.privacy": "Datenschutz- und Werbeeinstellungen", "priv.none": "Derzeit keine Optionen verfügbar."}};
   Object.keys(S10).forEach((l) => Object.assign(BB.I18n.dict[l], S10[l]));
   const S6 = {"it": {"res.lost1": "Cliente perso · perdi un cuore ♥", "res.lost2": "Cliente perso · perdi un cuore ♥", "tut.hud.lives": "Cuori: ogni cliente che scappa o birra sbagliata ti costa un cuore. I cuori NON si rigenerano passando di livello.", "upg.heart.n": "Quarto cuore", "upg.heart.d": "+1 cuore permanente (acquisto unico)", "fail.video": "Guarda un video: riprova il livello con tutti i cuori", "fail.save": "Concludi e salva il record", "fail.over": "Serie conclusa", "fail.note": "Con il video la serie continua. Se concludi, riparti da zero.", "ser.pending": "La tua serie in corso ({n} pt) diventa un record se la concludi e supera il tuo migliore."}, "en": {"res.lost1": "Customer lost · you lose a heart ♥", "res.lost2": "Customer lost · you lose a heart ♥", "tut.hud.lives": "Hearts: every customer who leaves or wrong beer costs you a heart. Hearts do NOT refill between levels.", "upg.heart.n": "Fourth heart", "upg.heart.d": "+1 permanent heart (one-time purchase)", "fail.video": "Watch a video: retry the level with all hearts", "fail.save": "Finish and save your record", "fail.over": "Streak over", "fail.note": "With the video your streak goes on. If you finish, you start from zero.", "ser.pending": "Your current streak ({n} pts) becomes a record if you finish it and it beats your best."}, "fr": {"res.lost1": "Client perdu · tu perds un cœur ♥", "res.lost2": "Client perdu · tu perds un cœur ♥", "tut.hud.lives": "Cœurs : chaque client qui part ou bière ratée te coûte un cœur. Les cœurs ne se rechargent PAS entre les niveaux.", "upg.heart.n": "Quatrième cœur", "upg.heart.d": "+1 cœur permanent (achat unique)", "fail.video": "Regarde une vidéo : refais le niveau avec tous les cœurs", "fail.save": "Terminer et enregistrer le record", "fail.over": "Série terminée", "fail.note": "Avec la vidéo, ta série continue. Si tu termines, tu repars de zéro.", "ser.pending": "Ta série en cours ({n} pts) devient un record si tu la termines et dépasses ton meilleur score."}, "de": {"res.lost1": "Gast verloren · du verlierst ein Herz ♥", "res.lost2": "Gast verloren · du verlierst ein Herz ♥", "tut.hud.lives": "Herzen: Jeder Gast, der geht, oder falsch gezapfte Bier kostet ein Herz. Die Herzen füllen sich beim Levelwechsel NICHT auf.", "upg.heart.n": "Viertes Herz", "upg.heart.d": "+1 dauerhaftes Herz (einmaliger Kauf)", "fail.video": "Video ansehen: Level mit allen Herzen wiederholen", "fail.save": "Beenden und Rekord speichern", "fail.over": "Serie beendet", "fail.note": "Mit dem Video geht deine Serie weiter. Beendest du sie, startest du bei null.", "ser.pending": "Deine laufende Serie ({n} Pkt) wird zum Rekord, wenn du sie beendest und deine Bestmarke schlägst."}};
@@ -3602,6 +3608,16 @@ input[type=range] { width: 100%; accent-color: var(--amber); height: 32px; }
       $('homeStats').hidden = !has;
       if (has) $('homeStats').textContent = T('home.stats', { l: save.data.session ? save.data.session.level : p.level, c: p.coins });
       { const ch = LB().chal, el = $('homeChal'); const on = ch && ch.s > 0 && LB().best < ch.s; el.hidden = !on; if (on) el.textContent = T('chal.banner', { nick: ch.n, n: fmtN(ch.s) }); }
+      try { // piccolo invito ad aggiornare: solo nell'app Android, al massimo una volta ogni 7 giorni, chiudibile
+        const el = $('homeUpd'), K = 'bb_upd_ts'; let last = 0; try { last = +localStorage.getItem(K) || 0; } catch (e) {}
+        const isA = !!(BB.nativeProvider && BB.nativeProvider.platform === 'android');
+        if (isA && (Date.now() - last > 7 * 864e5 || el.dataset.on === '1')) {
+          el.dataset.on = '1'; $('homeUpdTx').textContent = T('upd.tx'); $('homeUpdGo').textContent = T('upd.go'); el.hidden = false;
+          try { localStorage.setItem(K, String(last && el.dataset.on === '1' && Date.now() - last <= 7 * 864e5 ? last : Date.now())); } catch (e) {}
+          $('homeUpdX').onclick = () => { el.hidden = true; el.dataset.on = '0'; };
+          $('homeUpdGo').onclick = () => { el.dataset.on = '0'; };
+        } else el.hidden = true;
+      } catch (e) {}
       $('btnAds').hidden = true; // acquisto «senza pubblicità» non più offerto
       { const pr = provider.priceRemoveAds && provider.priceRemoveAds(); if (pr) $('btnAds').textContent = T('removeAds').replace(/·.*$/, '· ' + pr); }
       $('btnPrivacy').hidden = !(provider.showPrivacyOptions);
@@ -3700,6 +3716,9 @@ input[type=range] { width: 100%; accent-color: var(--amber); height: 32px; }
       const cv = makeCard(info), url = isAndroidApp() ? PLAY_URL : baseUrl() + '?s=' + score + '&n=' + encodeURIComponent(nick), text = T('share.text', { n: fmtN(score), nick }) + (isAndroidApp() ? ' ' + T('share.dl') : '');
       const blob = await new Promise((r) => { try { cv.toBlob(r, 'image/png'); } catch (e) { r(null); } });
       const file = blob && typeof File === 'function' ? new File([blob], 'the-publican.png', { type: 'image/png' }) : null;
+      if (BB.nativeShare) { // app: menu di condivisione di Android/iPhone (WhatsApp compresa)
+        try { const r = await BB.nativeShare({ text, url, title: T('share.btn'), pngBase64: cv.toDataURL('image/png').split(',')[1] }); if (r === 'shared' || r === 'cancel') return r; } catch (e) {}
+      }
       try {
         if (file && navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], text: text + ' ' + url }); return 'shared'; }
         if (navigator.share) { await navigator.share({ text, url }); return 'shared'; }
